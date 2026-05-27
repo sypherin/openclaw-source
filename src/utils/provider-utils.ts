@@ -8,6 +8,11 @@ import {
 
 const BUILTIN_REASONING_OUTPUT_MODES = {
   "google-generative-ai": "tagged",
+  // LOCAL PATCH: NVIDIA NIM providers emit reasoning in <think> tags
+  "nvidia-step": "tagged",
+  "nvidia-kimi-k2": "tagged",
+  minimax: "tagged",
+  "local-llama": "tagged",
 } as const;
 
 /**

@@ -3308,7 +3308,9 @@ export async function runEmbeddedPiAgent(
             yielded: attempt.yieldDetected === true,
           });
           return {
-            payloads: terminalPayloads?.length ? terminalPayloads : undefined,
+            // LOCAL PATCH: consistent downstream typing — empty payloads return
+            // [] instead of undefined so callers can rely on array type.
+            payloads: terminalPayloads?.length ? terminalPayloads : [],
             ...(attempt.diagnosticTrace
               ? { diagnosticTrace: freezeDiagnosticTraceContext(attempt.diagnosticTrace) }
               : {}),
