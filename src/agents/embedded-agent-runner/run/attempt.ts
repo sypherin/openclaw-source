@@ -482,6 +482,8 @@ import {
   shouldFlagCompactionTimeout,
   trimToContinuableTail,
 } from "./compaction-timeout.js";
+// LOCAL PATCH: GLM XML tool call repair for NVIDIA GLM models (see wiring below).
+import { shouldParseGlmToolCalls, wrapStreamFnParseGlmToolCalls } from "./glm-tool-call-repair.js";
 import {
   resolveFinalAssistantRawText,
   resolveFinalAssistantVisibleText,
@@ -3156,6 +3158,12 @@ export async function runEmbeddedAttempt(
         return innerStreamFn(model, context, options);
       };
 
+      // LOCAL PATCH: GLM XML tool call repair — convert GLM-style XML tool
+      // calls in text content into proper structured tool call blocks.
+      // Positioned before sanitize/trim so extracted calls get normalized.
+      if (shouldParseGlmToolCalls(params.provider, params.modelId)) {
+        activeSession.agent.streamFn = wrapStreamFnParseGlmToolCalls(activeSession.agent.streamFn);
+      }
       // Some models emit tool names with surrounding whitespace (e.g. " read ").
       // agent runtime dispatches tool calls with exact string matching, so normalize
       // names on the live response stream before tool execution.

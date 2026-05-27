@@ -7,6 +7,18 @@ import type { OpenClawConfig } from "../config/types.openclaw.js";
 import type { ProviderRuntimePluginHandle } from "../plugins/provider-hook-runtime.js";
 import type { ProviderRuntimeModel } from "../plugins/provider-runtime-model.types.js";
 import { resolveProviderReasoningOutputModeWithPlugin } from "../plugins/provider-runtime.js";
+// LOCAL PATCH: these providers emit reasoning in <think> tags and must be
+// force-tagged. Upstream's minimax extension declares "native", which leaks the
+// raw tags into replies; this const is consulted BEFORE the provider plugin hook
+// (see resolveReasoningOutputMode) so it overrides that. normalizeOptionalString
+// is already imported above from the relocated normalization package.
+const BUILTIN_REASONING_OUTPUT_MODES = {
+  "google-generative-ai": "tagged",
+  "nvidia-step": "tagged",
+  "nvidia-kimi-k2": "tagged",
+  minimax: "tagged",
+  "local-llama": "tagged",
+} as const;
 
 /**
  * Resolves whether a provider should emit reasoning via native fields or tagged text,
@@ -25,6 +37,14 @@ function resolveReasoningOutputMode(params: {
   const provider = normalizeOptionalString(params.provider);
   if (!provider) {
     return "native";
+  }
+
+  // LOCAL PATCH: hardcoded overrides win over provider hooks for the NIM/local
+  // providers that emit <think> tags (upstream declares some of these "native",
+  // which would leak the tags). Checked before the plugin hook on purpose.
+  const builtinMode = BUILTIN_REASONING_OUTPUT_MODES[provider as keyof typeof BUILTIN_REASONING_OUTPUT_MODES];
+  if (builtinMode) {
+    return builtinMode;
   }
 
   // Provider hooks own model/API-specific reasoning transport rules; core only supplies the default.

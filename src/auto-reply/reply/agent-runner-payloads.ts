@@ -56,17 +56,12 @@ async function normalizeReplyPayloadMedia(params: {
     const normalized = await params.normalizeMediaPaths(params.payload);
     return copyReplyPayloadMetadata(params.payload, normalized);
   } catch (err) {
-    logVerbose(`reply payload media normalization failed: ${String(err)}`);
-    // Preserve the text reply and drop unusable media so channels can still send the answer.
-    return copyReplyPayloadMetadata(params.payload, {
-      ...params.payload,
-      text: params.suppressMediaFailureWarning
-        ? params.payload.text
-        : appendReplyMediaFailureWarning(params.payload.text),
-      mediaUrl: undefined,
-      mediaUrls: undefined,
-      audioAsVoice: false,
-    });
+    // LOCAL PATCH: return payload unchanged on normalization error so that
+    // valid remote URLs are not silently dropped. Upstream zeros mediaUrl/
+    // mediaUrls/audioAsVoice which breaks WhatsApp media replies with
+    // remote URLs. Submitted upstream as PR #64449.
+    logVerbose(`reply payload media normalization failed, keeping original media: ${String(err)}`);
+    return params.payload;
   }
 }
 

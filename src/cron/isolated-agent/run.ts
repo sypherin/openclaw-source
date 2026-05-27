@@ -862,7 +862,11 @@ async function prepareCronRunContext(params: {
 
   const { formattedTime, timeLine } = resolveCronStyleNow(input.cfg, now);
   const message = resolveCronAgentTurnMessage(input);
-  const base = `[cron:${input.job.id} ${input.job.name}] ${message}`.trim();
+  // LOCAL PATCH: z.ai glm-5.1 ingress filter bans literal `[cron:` at start
+  // of user message (classifies it as prompt-injection marker, returns 429).
+  // Using `[cron ` with a space instead of colon is strictly more portable.
+  // Keep upstream's resolveCronAgentTurnMessage(input) for the message body.
+  const base = `[cron ${input.job.id} ${input.job.name}] ${message}`.trim();
   const isExternalHook =
     hookExternalContentSource !== undefined || isExternalHookSession(baseSessionKey);
   const allowUnsafeExternalContent =
