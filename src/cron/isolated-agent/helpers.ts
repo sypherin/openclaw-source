@@ -8,7 +8,14 @@ import { shouldSkipHeartbeatOnlyDelivery } from "../heartbeat-policy.js";
 
 type DeliveryPayload = Pick<
   ReplyPayload,
-  "text" | "mediaUrl" | "mediaUrls" | "presentation" | "interactive" | "channelData" | "isError"
+  | "text"
+  | "mediaUrl"
+  | "mediaUrls"
+  | "presentation"
+  | "interactive"
+  | "channelData"
+  | "isError"
+  | "isReasoning"
 >;
 
 export type CronPayloadOutcome = {
@@ -87,10 +94,10 @@ export function pickSummaryFromOutput(text: string | undefined) {
 }
 
 export function pickSummaryFromPayloads(
-  payloads: Array<{ text?: string | undefined; isError?: boolean }>,
+  payloads: Array<{ text?: string | undefined; isError?: boolean; isReasoning?: boolean }>,
 ) {
   for (let i = payloads.length - 1; i >= 0; i--) {
-    if (payloads[i]?.isError) {
+    if (payloads[i]?.isError || payloads[i]?.isReasoning) {
       continue;
     }
     const summary = pickSummaryFromOutput(payloads[i]?.text);
@@ -99,7 +106,7 @@ export function pickSummaryFromPayloads(
     }
   }
   for (let i = payloads.length - 1; i >= 0; i--) {
-    if (isNonTerminalToolErrorWarning(payloads[i])) {
+    if (isNonTerminalToolErrorWarning(payloads[i]) || payloads[i]?.isReasoning) {
       continue;
     }
     const summary = pickSummaryFromOutput(payloads[i]?.text);
@@ -111,10 +118,10 @@ export function pickSummaryFromPayloads(
 }
 
 export function pickLastNonEmptyTextFromPayloads(
-  payloads: Array<{ text?: string | undefined; isError?: boolean }>,
+  payloads: Array<{ text?: string | undefined; isError?: boolean; isReasoning?: boolean }>,
 ) {
   for (let i = payloads.length - 1; i >= 0; i--) {
-    if (payloads[i]?.isError) {
+    if (payloads[i]?.isError || payloads[i]?.isReasoning) {
       continue;
     }
     const clean = (payloads[i]?.text ?? "").trim();
@@ -123,7 +130,7 @@ export function pickLastNonEmptyTextFromPayloads(
     }
   }
   for (let i = payloads.length - 1; i >= 0; i--) {
-    if (isNonTerminalToolErrorWarning(payloads[i])) {
+    if (isNonTerminalToolErrorWarning(payloads[i]) || payloads[i]?.isReasoning) {
       continue;
     }
     const clean = (payloads[i]?.text ?? "").trim();
@@ -135,7 +142,7 @@ export function pickLastNonEmptyTextFromPayloads(
 }
 
 function isDeliverablePayload(payload: DeliveryPayload | null | undefined): boolean {
-  if (!payload) {
+  if (!payload || payload.isReasoning === true) {
     return false;
   }
   return hasOutboundReplyContent(payload, { trimText: true });
