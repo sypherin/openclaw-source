@@ -16,8 +16,8 @@
  */
 
 import { randomBytes } from "node:crypto";
-import type { StreamFn } from "@earendil-works/pi-agent-core";
-import { streamSimple } from "@earendil-works/pi-ai";
+import { streamSimple } from "../../../llm/stream.js";
+import type { StreamFn } from "../../runtime/index.js";
 
 // ---------------------------------------------------------------------------
 // Inlined GLM XML helpers (removed from upstream pi-embedded-utils.ts)

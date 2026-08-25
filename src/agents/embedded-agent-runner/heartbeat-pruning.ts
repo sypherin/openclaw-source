@@ -1,5 +1,5 @@
-import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { HEARTBEAT_TOKEN } from "../../auto-reply/tokens.js";
+import type { AgentMessage } from "../runtime/index.js";
 
 /**
  * Remove heartbeat poll/ack pairs from session history to save context tokens.
